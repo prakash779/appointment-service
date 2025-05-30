@@ -10,7 +10,7 @@ This repository contains infrastructure-as-code and CI/CD automation for deployi
 
 ---
 
-## 📦 Project Structure
+## Project Structure
 
 
 ![art](https://github.com/user-attachments/assets/796bda06-f29b-49f9-a569-bdfd6870ea93)
