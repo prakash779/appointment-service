@@ -4,7 +4,7 @@ provider "aws" {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "5.1.1"  # optional but recommended to pin version
+  version = "5.1.1"
 
   name                 = "main-vpc"
   cidr                 = "10.0.0.0/16"
@@ -36,4 +36,8 @@ module "eks" {
 
 resource "aws_ecr_repository" "app" {
   name = var.module_name
+
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
