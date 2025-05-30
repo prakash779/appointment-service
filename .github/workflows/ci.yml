@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - main
 
 env:
-  AWS_REGION: eu-north-1
-  MODULE_NAME: appointment-service
+  MODULE_NAME: hcl-appointment-service
+  ECR_PUBLIC_URI: public.ecr.aws/m7n8t2b8/hcl-appointment-service
+  AWS_REGION: us-east-1  # Public ECR is only in us-east-1
 
 jobs:
   build:
@@ -25,15 +25,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Login to Amazon ECR
-        uses: jwalton/gh-ecr-login@v1
-        with:
-          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ${{ env.AWS_REGION }}
+      - name: Login to Amazon Public ECR
+        run: |
+          aws ecr-public get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin public.ecr.aws
 
-      - name: Build and Push Docker Image
+      - name: Build and Push Docker Image to Public ECR
         run: |
           docker build -t $MODULE_NAME .
-          docker tag $MODULE_NAME ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$MODULE_NAME:${{ github.sha }}
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$MODULE_NAME:${{ github.sha }}
+          docker tag $MODULE_NAME $ECR_PUBLIC_URI:${{ github.sha }}
+          docker push $ECR_PUBLIC_URI:${{ github.sha }}
