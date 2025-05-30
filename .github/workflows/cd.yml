@@ -1,4 +1,4 @@
-name: CD - Deploy to EKS
+name: CI - Build, Push & Deploy to EKS
 
 on:
   push:
@@ -9,24 +9,46 @@ on:
 env:
   AWS_REGION: eu-north-1
   MODULE_NAME: appointment-service
+  ECR_PUBLIC_URI: public.ecr.aws/m7n8t2b8/appointment-service
+  CLUSTER_NAME: eks-cluster
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Login to Amazon Public ECR
+        run: |
+          aws ecr-public get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin public.ecr.aws
+
+      - name: Build and Push Docker Image to Public ECR
+        run: |
+          docker build -t $MODULE_NAME .
+          docker tag $MODULE_NAME $ECR_PUBLIC_URI:${{ github.sha }}
+          docker push $ECR_PUBLIC_URI:${{ github.sha }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
       - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --region $AWS_REGION --name eks-cluster
+          aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME
 
       - name: Deploy to EKS
         run: |
