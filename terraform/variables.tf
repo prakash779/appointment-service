@@ -1,9 +1,9 @@
 variable "region" {
-  description = "AWS Region"
+  description = "AWS region to deploy resources"
   default     = "eu-north-1"
 }
 
 variable "module_name" {
-  description = "ECR Repo / App Name"
-  default     = "appointment-service"
+  description = "ECR repository name"
+  default     = "hcl-appointment-service"
 }
